@@ -1,0 +1,3 @@
+/bin/mjpeg-server-*
+/bin/*.exe
+/mjpeg-server
