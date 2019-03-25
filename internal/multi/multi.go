@@ -5,45 +5,55 @@ import (
 	"sync"
 )
 
-// MapWriter implements io.Writer and writes to a map of Writers.
-// Unlike io.MultiWriter it ignores errors returned by the individual Writers.
-// Writers can be added and removed with the Set and Delete methods.
-type MapWriter struct {
-	writers map[string]io.Writer
+type empty struct{}
+
+type mapWriter struct {
+	writers map[io.Writer]empty
 	lock    *sync.RWMutex
 }
 
-func (t *MapWriter) Write(p []byte) (int, error) {
+// MapWriter is an interface to write to a map of Writers.
+// Writers can be added and removed with the Add and Remove methods, while the
+// Size method returns the current map size.
+type MapWriter interface {
+	Write(p []byte) (int, error)
+	Add(w io.Writer) (size int)
+	Remove(w io.Writer) (size int)
+	Size() int
+}
+
+// Write implements io.Writer but ignores errors by the individual Writers.
+func (t *mapWriter) Write(p []byte) (int, error) {
 	t.lock.RLock()
-	for _, w := range t.writers {
+	for w := range t.writers {
 		w.Write(p)
 	}
 	t.lock.RUnlock()
 	return len(p), nil
 }
 
-// Set adds a Writer with the given ID to the Writers map.
+// Add puts the given Writer into the Writers map.
 // It returns the new size of the Writers map.
-func (t *MapWriter) Set(id string, w io.Writer) (size int) {
+func (t *mapWriter) Add(w io.Writer) (size int) {
 	t.lock.Lock()
-	t.writers[id] = w
+	t.writers[w] = empty{}
 	size = len(t.writers)
 	t.lock.Unlock()
 	return
 }
 
-// Delete removes a Writer with the given ID from the Writers map.
+// Remove deletes the given Writer from the Writers map.
 // It returns the new size of the Writers map.
-func (t *MapWriter) Delete(id string) (size int) {
+func (t *mapWriter) Remove(w io.Writer) (size int) {
 	t.lock.Lock()
-	delete(t.writers, id)
+	delete(t.writers, w)
 	size = len(t.writers)
 	t.lock.Unlock()
 	return
 }
 
 // Size returns the size of the Writers map.
-func (t *MapWriter) Size() int {
+func (t *mapWriter) Size() int {
 	t.lock.RLock()
 	size := len(t.writers)
 	t.lock.RUnlock()
@@ -51,8 +61,7 @@ func (t *MapWriter) Size() int {
 }
 
 // NewMapWriter creates a new MapWriter.
-func NewMapWriter() *MapWriter {
-	writers := make(map[string]io.Writer)
-	lock := sync.RWMutex{}
-	return &MapWriter{writers, &lock}
+func NewMapWriter() MapWriter {
+	writers := make(map[io.Writer]empty)
+	return &mapWriter{writers, &sync.RWMutex{}}
 }

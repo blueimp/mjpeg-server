@@ -12,7 +12,6 @@ import (
 	"github.com/blueimp/mjpeg-server/internal/multi"
 	"github.com/blueimp/mjpeg-server/internal/recording"
 	"github.com/blueimp/mjpeg-server/internal/request"
-	"github.com/google/uuid"
 )
 
 var (
@@ -25,7 +24,7 @@ var (
 	boundary       = flag.String("b", "ffmpeg", "Multipart boundary")
 	command        string
 	args           []string
-	clients        *multi.MapWriter
+	clients        multi.MapWriter
 	startRecording recording.StartFunc
 	stopRecording  context.CancelFunc
 )
@@ -38,18 +37,16 @@ func parseArgs() {
 	}
 }
 
-func registerClient(w io.Writer) string {
-	id := uuid.New().String()
-	// We register each client with a unique ID, therefore if the size of the
-	// clients is 1, we have our first client and must start the recording.
-	if clients.Set(id, w) == 1 {
+func registerClient(w io.Writer) {
+	if clients.Add(w) == 1 {
+		// First client added, start the recording.
 		stopRecording, _ = startRecording(command, args, clients)
 	}
-	return id
 }
 
-func deregisterClient(id string) {
-	if clients.Delete(id) == 0 {
+func deregisterClient(w io.Writer) {
+	if clients.Remove(w) == 0 {
+		// Last client removed, stop the recording.
 		stopRecording()
 	}
 }
@@ -84,11 +81,10 @@ func requestHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	setHeaders(res.Header())
-	// Register the client, writing recording output to its http.ResponseWriter.
-	id := registerClient(res)
-	// Deregister the client when the connection is closed.
+	registerClient(res)
+	// Wait until the client connection is closed.
 	<-req.Context().Done()
-	deregisterClient(id)
+	deregisterClient(res)
 }
 
 func main() {
