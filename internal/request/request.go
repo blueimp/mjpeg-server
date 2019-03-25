@@ -1,3 +1,6 @@
+/*
+Package request provides a simple JSON logger for http.Request objects.
+*/
 package request
 
 import (

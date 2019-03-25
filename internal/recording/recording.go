@@ -1,3 +1,8 @@
+/*
+Package recording implements a wrapper around a given recording command.
+It provides functionality to start, stop, automatically restart and to wait for
+the command to finish.
+*/
 package recording
 
 import (

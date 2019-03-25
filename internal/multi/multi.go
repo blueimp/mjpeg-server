@@ -1,3 +1,7 @@
+/*
+Package multi implements a threadsafe writer interfaces that multiplies its
+input to a map of writers.
+*/
 package multi
 
 import (
