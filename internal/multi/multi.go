@@ -15,36 +15,39 @@ type MapWriter struct {
 
 func (t *MapWriter) Write(p []byte) (int, error) {
 	t.lock.RLock()
-	defer t.lock.RUnlock()
 	for _, w := range t.writers {
 		w.Write(p)
 	}
+	t.lock.RUnlock()
 	return len(p), nil
 }
 
 // Set adds a Writer with the given ID to the Writers map.
 // It returns the new size of the Writers map.
-func (t *MapWriter) Set(id string, w io.Writer) int {
+func (t *MapWriter) Set(id string, w io.Writer) (size int) {
 	t.lock.Lock()
-	defer t.lock.Unlock()
 	t.writers[id] = w
-	return len(t.writers)
+	size = len(t.writers)
+	t.lock.Unlock()
+	return
 }
 
 // Delete removes a Writer with the given ID from the Writers map.
 // It returns the new size of the Writers map.
-func (t *MapWriter) Delete(id string) int {
+func (t *MapWriter) Delete(id string) (size int) {
 	t.lock.Lock()
-	defer t.lock.Unlock()
 	delete(t.writers, id)
-	return len(t.writers)
+	size = len(t.writers)
+	t.lock.Unlock()
+	return
 }
 
 // Size returns the size of the Writers map.
 func (t *MapWriter) Size() int {
 	t.lock.RLock()
-	defer t.lock.RUnlock()
-	return len(t.writers)
+	size := len(t.writers)
+	t.lock.RUnlock()
+	return size
 }
 
 // NewMapWriter creates a new MapWriter.

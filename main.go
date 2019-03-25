@@ -87,8 +87,8 @@ func requestHandler(res http.ResponseWriter, req *http.Request) {
 	// Register the client, writing recording output to its http.ResponseWriter.
 	id := registerClient(res)
 	// Deregister the client when the connection is closed.
-	defer deregisterClient(id)
 	<-req.Context().Done()
+	deregisterClient(id)
 }
 
 func main() {

@@ -12,10 +12,6 @@ func outputHelper(fn func()) (stdout []byte, stderr []byte) {
 	errReader, errWriter, _ := os.Pipe()
 	originalOut := os.Stdout
 	originalErr := os.Stderr
-	defer func() {
-		os.Stdout = originalOut
-		os.Stderr = originalErr
-	}()
 	os.Stdout = outWriter
 	os.Stderr = errWriter
 	fn()
@@ -23,6 +19,8 @@ func outputHelper(fn func()) (stdout []byte, stderr []byte) {
 	errWriter.Close()
 	stdout, _ = ioutil.ReadAll(outReader)
 	stderr, _ = ioutil.ReadAll(errReader)
+	os.Stdout = originalOut
+	os.Stderr = originalErr
 	return
 }
 

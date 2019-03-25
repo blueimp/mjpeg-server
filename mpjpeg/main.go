@@ -30,7 +30,6 @@ func streamFiles(filePaths []string) {
 	multipartWriter.SetBoundary(*boundary)
 	header := make(textproto.MIMEHeader)
 	header.Add("Content-Type", "image/jpeg")
-	defer multipartWriter.Close()
 	for {
 		for i := range filePaths {
 			writer, _ := multipartWriter.CreatePart(header)
@@ -41,6 +40,7 @@ func streamFiles(filePaths []string) {
 			break
 		}
 	}
+	multipartWriter.Close()
 }
 
 func main() {
