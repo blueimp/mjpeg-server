@@ -104,7 +104,7 @@ mjpeg-server -- ffmpeg \
   -video_size 1440x900 \
   -i :0 \
   -f mpjpeg \
-  -q 7 \
+  -q 2 \
   -
 ```
 
@@ -131,7 +131,7 @@ mjpeg-server -- ffmpeg \
   -pixel_format yuyv422 \
   -i 1 \
   -f mpjpeg \
-  -q 7 \
+  -q 2 \
   -
 ```
 
@@ -153,7 +153,7 @@ MJPEGServer -- ffmpeg `
   -r 15 `
   -i desktop `
   -f mpjpeg `
-  -q 7 `
+  -q 2 `
   -
 ```
 
