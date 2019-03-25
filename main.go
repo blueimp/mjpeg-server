@@ -54,6 +54,24 @@ func deregisterClient(id string) {
 	}
 }
 
+func setHeaders(header http.Header) {
+	// Provide the multipart boundary via MJPEG over HTTP content-type header.
+	// See also:
+	// - https://en.wikipedia.org/wiki/Motion_JPEG#M-JPEG_over_HTTP
+	// - https://tools.ietf.org/html/rfc2046#section-5.1.1
+	header.Set(
+		"Content-Type",
+		fmt.Sprintf("multipart/x-mixed-replace;boundary=%s", *boundary),
+	)
+	// Prevent client caches from storing the response.
+	// See also: https://tools.ietf.org/html/rfc7234#section-5.2.1.5
+	header.Set("Cache-Control", "no-store")
+	// Signal to the client that the connection will be closed after completion of
+	// the response.
+	// See also: https://tools.ietf.org/html/rfc2616#section-14.10
+	header.Set("Connection", "close")
+}
+
 func requestHandler(res http.ResponseWriter, req *http.Request) {
 	request.Log(req)
 	if req.Method != "GET" {
@@ -65,21 +83,7 @@ func requestHandler(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
-	// Provide the multipart boundary via MJPEG over HTTP content-type header.
-	// See also:
-	// - https://en.wikipedia.org/wiki/Motion_JPEG#M-JPEG_over_HTTP
-	// - https://tools.ietf.org/html/rfc2046#section-5.1.1
-	res.Header().Set(
-		"Content-Type",
-		fmt.Sprintf("multipart/x-mixed-replace;boundary=%s", *boundary),
-	)
-	// Prevent client caches from storing the response.
-	// See also: https://tools.ietf.org/html/rfc7234#section-5.2.1.5
-	res.Header().Set("Cache-Control", "no-store")
-	// Signal to the client that the connection will be closed after completion of
-	// the response.
-	// See also: https://tools.ietf.org/html/rfc2616#section-14.10
-	res.Header().Set("Connection", "close")
+	setHeaders(res.Header())
 	// Register the client, writing recording output to its http.ResponseWriter.
 	id := registerClient(res)
 	// Deregister the client when the connection is closed.
