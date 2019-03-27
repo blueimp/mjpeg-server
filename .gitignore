@@ -1,3 +1,2 @@
-/bin/mjpeg-server-*
-/bin/*.exe
+/build
 /mjpeg-server
