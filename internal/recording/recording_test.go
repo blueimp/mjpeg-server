@@ -70,18 +70,27 @@ func TestStart(t *testing.T) {
 			expectedPath,
 		)
 	}
-	args = []string{"run", mpjpegPath, "-s", "400ms", filePath}
-	buffer.Reset()
-	stop, wait = Start(command, args, &buffer)
+	exitStatusZero = nil
+}
+
+func TestStartWithCancel(t *testing.T) {
+	exitStatusZero = errors.New("restart on exit zero")
+	command := "go"
+	mpjpegPath := "../../mpjpeg/main.go"
+	filePath := "../../gopher.jpg"
+	imageData, _ := ioutil.ReadFile(filePath)
+	var buffer bytes.Buffer
+	args := []string{"run", mpjpegPath, "-s", "400ms", filePath}
+	stop, wait := Start(command, args, &buffer)
 	go func() {
 		time.Sleep(800 * time.Millisecond)
 		stop()
 	}()
-	err = wait()
+	err := wait()
 	if err != context.Canceled {
 		t.Errorf("Unexpected error: %s", err)
 	}
-	expectedOutput = bytes.Join(
+	expectedOutput := bytes.Join(
 		[][]byte{
 			[]byte("--ffmpeg"),
 			[]byte("Content-Type: image/jpeg"),
@@ -94,7 +103,7 @@ func TestStart(t *testing.T) {
 		},
 		[]byte("\r\n"),
 	)
-	output, _ = ioutil.ReadAll(&buffer)
+	output, _ := ioutil.ReadAll(&buffer)
 	if !bytes.Equal(output, expectedOutput) {
 		outputPath, expectedPath := writeOutputFiles(t, output, expectedOutput)
 		t.Errorf(
