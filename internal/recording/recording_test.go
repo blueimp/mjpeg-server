@@ -10,17 +10,17 @@ import (
 	"time"
 )
 
-func outputError(t *testing.T, output []byte, expected []byte) {
+func writeOutputFiles(
+	t *testing.T,
+	output []byte,
+	expected []byte,
+) (outputPath string, expectedPath string) {
 	tmpDir, _ := ioutil.TempDir("", "mpjpeg")
-	outputPath := filepath.Join(tmpDir, "output.mpjpeg")
-	expectedPath := filepath.Join(tmpDir, "expected.mpjpeg")
+	outputPath = filepath.Join(tmpDir, "output.mpjpeg")
+	expectedPath = filepath.Join(tmpDir, "expected.mpjpeg")
 	ioutil.WriteFile(outputPath, output, 0600)
 	ioutil.WriteFile(expectedPath, expected, 0600)
-	t.Errorf(
-		"Unexpected output: see %s. Expected: see %s",
-		outputPath,
-		expectedPath,
-	)
+	return
 }
 
 func TestStart(t *testing.T) {
@@ -63,7 +63,12 @@ func TestStart(t *testing.T) {
 	)
 	output, _ := ioutil.ReadAll(&buffer)
 	if !bytes.Equal(output, expectedOutput) {
-		outputError(t, output, expectedOutput)
+		outputPath, expectedPath := writeOutputFiles(t, output, expectedOutput)
+		t.Errorf(
+			"Unexpected output: see %s. Expected: see %s",
+			outputPath,
+			expectedPath,
+		)
 	}
 	args = []string{"run", mpjpegPath, "-s", "400ms", filePath}
 	buffer.Reset()
@@ -91,7 +96,12 @@ func TestStart(t *testing.T) {
 	)
 	output, _ = ioutil.ReadAll(&buffer)
 	if !bytes.Equal(output, expectedOutput) {
-		outputError(t, output, expectedOutput)
+		outputPath, expectedPath := writeOutputFiles(t, output, expectedOutput)
+		t.Errorf(
+			"Unexpected output: see %s. Expected: see %s",
+			outputPath,
+			expectedPath,
+		)
 	}
 	exitStatusZero = nil
 }
@@ -131,7 +141,12 @@ func TestStartWithRestart(t *testing.T) {
 	)
 	output, _ := ioutil.ReadAll(&buffer)
 	if !bytes.Equal(output, expectedOutput) {
-		outputError(t, output, expectedOutput)
+		outputPath, expectedPath := writeOutputFiles(t, output, expectedOutput)
+		t.Errorf(
+			"Unexpected output: see %s. Expected: see %s",
+			outputPath,
+			expectedPath,
+		)
 	}
 	exitStatusZero = nil
 }
