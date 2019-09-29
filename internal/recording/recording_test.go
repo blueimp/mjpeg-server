@@ -29,7 +29,7 @@ func writeOutputFiles(
 }
 
 func TestStart(t *testing.T) {
-	exitStatusZero = errors.New("restart on exit zero")
+	exitStatusZero = nil
 	command := "go"
 	mpjpegPath := "../../mpjpeg/main.go"
 	filePath := "../../gopher.jpg"
@@ -75,24 +75,25 @@ func TestStart(t *testing.T) {
 			expectedPath,
 		)
 	}
-	exitStatusZero = nil
 }
 
 func TestStartWithCancel(t *testing.T) {
-	exitStatusZero = errors.New("restart on exit zero")
+	exitStatusZero = nil
 	command := "go"
 	mpjpegPath := "../../mpjpeg/main.go"
 	filePath := "../../gopher.jpg"
 	imageData, _ := ioutil.ReadFile(filePath)
 	var buffer bytes.Buffer
-	args := []string{"run", mpjpegPath, "-s", "400ms", filePath}
+	args := []string{"run", mpjpegPath, "-s", "1000ms", filePath}
 	stop, wait := Start(command, args, &buffer)
 	go func() {
-		time.Sleep(800 * time.Millisecond)
+		time.Sleep(1500 * time.Millisecond)
 		stop()
 	}()
 	err := wait()
-	if err != context.Canceled {
+	if err == nil {
+		t.Error("Unexpected nil error")
+	} else if err != context.Canceled {
 		t.Errorf("Unexpected error: %s", err)
 	}
 	expectedOutput := bytes.Join(
@@ -117,7 +118,6 @@ func TestStartWithCancel(t *testing.T) {
 			expectedPath,
 		)
 	}
-	exitStatusZero = nil
 }
 
 func TestStartWithRestart(t *testing.T) {
@@ -130,7 +130,7 @@ func TestStartWithRestart(t *testing.T) {
 	var buffer bytes.Buffer
 	stop, wait := Start(command, args, &buffer)
 	go func() {
-		time.Sleep(1800 * time.Millisecond)
+		time.Sleep(2000 * time.Millisecond)
 		stop()
 	}()
 	err := wait()
@@ -162,7 +162,6 @@ func TestStartWithRestart(t *testing.T) {
 			expectedPath,
 		)
 	}
-	exitStatusZero = nil
 }
 
 func TestStartWithInvalidCommand(t *testing.T) {
