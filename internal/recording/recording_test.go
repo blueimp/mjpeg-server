@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -15,7 +16,11 @@ func writeOutputFiles(
 	output []byte,
 	expected []byte,
 ) (outputPath string, expectedPath string) {
-	tmpDir, _ := ioutil.TempDir("", "mpjpeg")
+	outputDir := os.Getenv("OUTPUT_DIR")
+	if outputDir != "" {
+		os.MkdirAll(outputDir, os.ModePerm)
+	}
+	tmpDir, _ := ioutil.TempDir(outputDir, "mpjpeg")
 	outputPath = filepath.Join(tmpDir, "output.mpjpeg")
 	expectedPath = filepath.Join(tmpDir, "expected.mpjpeg")
 	ioutil.WriteFile(outputPath, output, 0600)
