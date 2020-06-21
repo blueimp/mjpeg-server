@@ -36,7 +36,6 @@ func run(
 	status chan error,
 ) {
 	cmd := exec.CommandContext(ctx, command, args...)
-	wait := cmd.Wait
 	cmd.Stderr = os.Stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -55,7 +54,7 @@ func run(
 	go io.Copy(w, stdout)
 	startTime := time.Now()
 	log.Println("Recording started")
-	err = wait()
+	err = cmd.Wait()
 	log.Println("Recording stopped")
 	canceled := ctx.Err()
 	if err != exitStatusZero && canceled != context.Canceled {
