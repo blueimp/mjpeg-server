@@ -39,7 +39,7 @@ func TestLog(t *testing.T) {
 	req.Header.Set("X-Forwarded-For", "127.0.0.1")
 	timeBefore := time.Now()
 	stdout, stderr := outputHelper(func() {
-		Log(req)
+		Log(req, "1")
 	})
 	timeAfter := time.Now()
 	if string(stderr) != "" {
@@ -47,6 +47,9 @@ func TestLog(t *testing.T) {
 	}
 	var entry logEntry
 	json.Unmarshal(stdout, &entry)
+	if entry.ID != "1" {
+		t.Errorf("Unexpected 'ID' log: %s. Expected: %s", entry.ID, "1")
+	}
 	if entry.Time.Before(timeBefore) {
 		t.Errorf("Unexpected 'Time' log: %s", entry.Time)
 	}

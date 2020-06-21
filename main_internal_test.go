@@ -2,43 +2,16 @@ package main
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/blueimp/mjpeg-server/internal/multi"
-	"github.com/blueimp/mjpeg-server/internal/recording"
+	"github.com/blueimp/mjpeg-server/internal/registry"
 )
 
 func TestRequestHandler(t *testing.T) {
-	clients = multi.NewMapWriter()
-	size := clients.Size()
-	if size != 0 {
-		t.Errorf("Unexpected clients size: %d. Expected: %d", size, 0)
-	}
-	started := 0
-	stopped := 0
-	startRecording = func(command string, args []string, w io.Writer) (
-		stop context.CancelFunc,
-		wait recording.WaitFunc,
-	) {
-		size := clients.Size()
-		if size != 1 {
-			t.Errorf("Unexpected clients size: %d. Expected: %d", size, 1)
-		}
-		started++
-		stop = func() {
-			size := clients.Size()
-			if size != 0 {
-				t.Errorf("Unexpected clients size: %d. Expected: %d", size, 0)
-			}
-			stopped++
-		}
-		wait = func() error { return nil }
-		return
-	}
+	reg = registry.New(command, args)
 	rec := httptest.NewRecorder()
 	ctx, cancel := context.WithCancel(context.Background())
 	req := httptest.NewRequest(
@@ -47,40 +20,10 @@ func TestRequestHandler(t *testing.T) {
 		nil,
 	).WithContext(ctx)
 	go func() {
-		rec := httptest.NewRecorder()
-		ctx, cancel2 := context.WithCancel(context.Background())
-		req := httptest.NewRequest(
-			"GET",
-			"http://localhost:9000/",
-			nil,
-		).WithContext(ctx)
-		go func() {
-			time.Sleep(100 * time.Millisecond)
-			size := clients.Size()
-			if size != 2 {
-				t.Errorf("Unexpected clients size: %d. Expected: %d", size, 2)
-			}
-			cancel2()
-		}()
-		requestHandler(rec, req)
 		time.Sleep(100 * time.Millisecond)
 		cancel()
 	}()
 	requestHandler(rec, req)
-	if started != 1 {
-		t.Errorf(
-			"Unexpected number of recording starts: %d. Expected: %d",
-			started,
-			1,
-		)
-	}
-	if stopped != 1 {
-		t.Errorf(
-			"Unexpected number of recording stops: %d. Expected: %d",
-			stopped,
-			1,
-		)
-	}
 	if rec.Code != http.StatusOK {
 		t.Errorf(
 			"Unexpected response status: %d. Expected: %d",
@@ -118,6 +61,7 @@ func TestRequestHandler(t *testing.T) {
 }
 
 func TestRequestHandlerWithInvalidMethod(t *testing.T) {
+	reg = registry.New(command, args)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(
 		"POST",
@@ -135,6 +79,7 @@ func TestRequestHandlerWithInvalidMethod(t *testing.T) {
 }
 
 func TestRequestHandlerWithInvalidPath(t *testing.T) {
+	reg = registry.New(command, args)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(
 		"GET",
@@ -152,6 +97,7 @@ func TestRequestHandlerWithInvalidPath(t *testing.T) {
 }
 
 func TestRequestHandlerWithCustomPath(t *testing.T) {
+	reg = registry.New(command, args)
 	*urlPath = "/banana"
 	rec := httptest.NewRecorder()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -190,6 +136,7 @@ func TestRequestHandlerWithCustomPath(t *testing.T) {
 }
 
 func TestRequestHandlerWithCustomBoundary(t *testing.T) {
+	reg = registry.New(command, args)
 	*boundary = "banana"
 	rec := httptest.NewRecorder()
 	ctx, cancel := context.WithCancel(context.Background())

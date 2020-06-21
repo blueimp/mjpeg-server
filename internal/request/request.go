@@ -12,6 +12,7 @@ import (
 )
 
 type logEntry struct {
+	ID             string
 	Time           time.Time
 	RemoteIP       string
 	Method         string
@@ -25,9 +26,10 @@ type logEntry struct {
 }
 
 // Log prints details for the given request object as JSON to STDOUT.
-func Log(req *http.Request) {
+func Log(req *http.Request, id string) {
 	ip, _, _ := net.SplitHostPort(req.RemoteAddr)
 	entry := &logEntry{
+		ID:             id,
 		Time:           time.Now().UTC(),
 		RemoteIP:       ip,
 		Method:         req.Method,

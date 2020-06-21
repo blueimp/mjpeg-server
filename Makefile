@@ -14,8 +14,9 @@ RELEASES=$(RELEASE_LINUX_AMD64) $(RELEASE_DARWIN_AMD64) $(RELEASE_WINDOWS_AMD64)
 # Dependencies:
 DEP_MULTI = internal/multi/multi.go
 DEP_RECORDING = internal/recording/recording.go
+DEP_REGISTRY = internal/registry/registry.go
 DEP_REQUEST = internal/request/request.go
-DEPS = $(DEP_MULTI) $(DEP_RECORDING) $(DEP_REQUEST) main.go
+DEPS = $(DEP_MULTI) $(DEP_RECORDING) $(DEP_REQUEST) $(DEP_REGISTRY) main.go
 
 # Use the git tag for the current commit as version or "dev" as fallback:
 GET_VERSION=git describe --exact-match --tags 2> /dev/null || echo dev

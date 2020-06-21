@@ -1,16 +1,13 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/blueimp/mjpeg-server/internal/multi"
-	"github.com/blueimp/mjpeg-server/internal/recording"
+	"github.com/blueimp/mjpeg-server/internal/registry"
 	"github.com/blueimp/mjpeg-server/internal/request"
 )
 
@@ -24,32 +21,8 @@ var (
 	boundary       = flag.String("b", "ffmpeg", "Multipart boundary")
 	command        string
 	args           []string
-	clients        multi.MapWriter
-	startRecording recording.StartFunc
-	stopRecording  context.CancelFunc
+	reg            registry.Registry
 )
-
-func parseArgs() {
-	flag.Parse()
-	command = flag.Arg(0)
-	if command != "" {
-		args = flag.Args()[1:]
-	}
-}
-
-func registerClient(w io.Writer) {
-	if clients.Add(w) == 1 {
-		// First client added, start the recording.
-		stopRecording, _ = startRecording(command, args, clients)
-	}
-}
-
-func deregisterClient(w io.Writer) {
-	if clients.Remove(w) == 0 {
-		// Last client removed, stop the recording.
-		stopRecording()
-	}
-}
 
 func setHeaders(header http.Header) {
 	// Provide the multipart boundary via MJPEG over HTTP content-type header.
@@ -70,7 +43,8 @@ func setHeaders(header http.Header) {
 }
 
 func requestHandler(res http.ResponseWriter, req *http.Request) {
-	request.Log(req)
+	id := reg.GenerateID()
+	request.Log(req, id)
 	if req.Method != "GET" {
 		res.Header().Set("Allow", "GET")
 		res.WriteHeader(http.StatusMethodNotAllowed)
@@ -81,10 +55,18 @@ func requestHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	setHeaders(res.Header())
-	registerClient(res)
+	reg.Add(id, res)
 	// Wait until the client connection is closed.
 	<-req.Context().Done()
-	deregisterClient(res)
+	reg.Remove(id, res)
+}
+
+func parseArgs() {
+	flag.Parse()
+	command = flag.Arg(0)
+	if command != "" {
+		args = flag.Args()[1:]
+	}
 }
 
 func main() {
@@ -94,7 +76,6 @@ func main() {
 		fmt.Println(Version)
 		os.Exit(0)
 	}
-	clients = multi.NewMapWriter()
-	startRecording = recording.Start
+	reg = registry.New(command, args)
 	log.Fatalln(http.ListenAndServe(*addr, http.HandlerFunc(requestHandler)))
 }
