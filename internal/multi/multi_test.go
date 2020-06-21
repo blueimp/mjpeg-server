@@ -22,7 +22,7 @@ func TestNewMapWriter(t *testing.T) {
 	}
 }
 
-func TestSet(t *testing.T) {
+func TestAdd(t *testing.T) {
 	writer := NewMapWriter()
 	var (
 		buffer1 bytes.Buffer
@@ -38,7 +38,7 @@ func TestSet(t *testing.T) {
 	}
 }
 
-func TestDelete(t *testing.T) {
+func TestRemove(t *testing.T) {
 	writer := NewMapWriter()
 	var (
 		buffer1 bytes.Buffer
