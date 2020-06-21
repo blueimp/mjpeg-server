@@ -174,3 +174,14 @@ func TestStartWithInvalidCommand(t *testing.T) {
 		t.Error("Unexpected nil error")
 	}
 }
+
+func TestStartWithShortDurationCommand(t *testing.T) {
+	command := "go"
+	args := []string{"version"}
+	var buffer bytes.Buffer
+	_, wait := Start(command, args, &buffer)
+	err := wait()
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+}
