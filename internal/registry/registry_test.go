@@ -46,7 +46,7 @@ func outputHelper(fn func()) (stdout []byte, stderr []byte) {
 }
 
 func TestNew(t *testing.T) {
-	reg := New("go", []string{"version"})
+	reg := New("go", []string{"version"}, false)
 	if reg == nil {
 		t.Error("Unexpected: nil")
 	}
@@ -57,7 +57,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestGenerateID(t *testing.T) {
-	reg := New("go", []string{"version"})
+	reg := New("go", []string{"version"}, false)
 	id := reg.GenerateID()
 	if id != "1" {
 		t.Errorf("Unexpected generated ID: %s. Expected: %s", id, "1")
@@ -76,7 +76,7 @@ func TestAdd(t *testing.T) {
 	started = 0
 	stopped = 0
 	startRecording = startRecordingHelper
-	reg := New("go", []string{"version"})
+	reg := New("go", []string{"version"}, false)
 	if started != 0 {
 		t.Errorf("Unexpected started recordings: %d. Expected: %d", started, 0)
 	}
@@ -150,7 +150,7 @@ func TestRemove(t *testing.T) {
 	started = 0
 	stopped = 0
 	startRecording = startRecordingHelper
-	reg := New("go", []string{"version"})
+	reg := New("go", []string{"version"}, false)
 	var (
 		buffer1 bytes.Buffer
 		buffer2 bytes.Buffer
@@ -225,5 +225,28 @@ func TestRemove(t *testing.T) {
 			entry.NumClients,
 			0,
 		)
+	}
+}
+
+func TestNewWithDirectStart(t *testing.T) {
+	started = 0
+	stopped = 0
+	startRecording = startRecordingHelper
+	reg := New("go", []string{"version"}, true)
+	if started != 1 {
+		t.Errorf("Unexpected started recordings: %d. Expected: %d", started, 1)
+	}
+	var buffer1 bytes.Buffer
+	outputHelper(func() {
+		reg.Add("1", &buffer1)
+	})
+	if started != 1 {
+		t.Errorf("Unexpected started recordings: %d. Expected: %d", started, 1)
+	}
+	outputHelper(func() {
+		reg.Remove("1", &buffer1)
+	})
+	if stopped != 0 {
+		t.Errorf("Unexpected stopped recordings: %d. Expected: %d", stopped, 0)
 	}
 }

@@ -11,7 +11,7 @@ import (
 )
 
 func TestRequestHandler(t *testing.T) {
-	reg = registry.New(command, args)
+	reg = registry.New(command, args, false)
 	rec := httptest.NewRecorder()
 	ctx, cancel := context.WithCancel(context.Background())
 	req := httptest.NewRequest(
@@ -61,7 +61,7 @@ func TestRequestHandler(t *testing.T) {
 }
 
 func TestRequestHandlerWithInvalidMethod(t *testing.T) {
-	reg = registry.New(command, args)
+	reg = registry.New(command, args, false)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(
 		"POST",
@@ -79,7 +79,7 @@ func TestRequestHandlerWithInvalidMethod(t *testing.T) {
 }
 
 func TestRequestHandlerWithInvalidPath(t *testing.T) {
-	reg = registry.New(command, args)
+	reg = registry.New(command, args, false)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(
 		"GET",
@@ -97,7 +97,7 @@ func TestRequestHandlerWithInvalidPath(t *testing.T) {
 }
 
 func TestRequestHandlerWithCustomPath(t *testing.T) {
-	reg = registry.New(command, args)
+	reg = registry.New(command, args, false)
 	*urlPath = "/banana"
 	rec := httptest.NewRecorder()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -136,7 +136,7 @@ func TestRequestHandlerWithCustomPath(t *testing.T) {
 }
 
 func TestRequestHandlerWithCustomBoundary(t *testing.T) {
-	reg = registry.New(command, args)
+	reg = registry.New(command, args, false)
 	*boundary = "banana"
 	rec := httptest.NewRecorder()
 	ctx, cancel := context.WithCancel(context.Background())

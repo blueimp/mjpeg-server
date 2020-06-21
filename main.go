@@ -14,14 +14,15 @@ import (
 var (
 	// Version provides the program version information.
 	// It is provided at build time via -ldflags="-X main.Version=VERSION".
-	Version        = "dev"
-	showVersion    = flag.Bool("v", false, "Output version and exit")
-	addr           = flag.String("a", ":9000", "TCP listen address")
-	urlPath        = flag.String("p", "/", "URL path")
-	boundary       = flag.String("b", "ffmpeg", "Multipart boundary")
-	command        string
-	args           []string
-	reg            registry.Registry
+	Version     = "dev"
+	showVersion = flag.Bool("v", false, "Output version and exit")
+	directStart = flag.Bool("d", false, "Start command directly")
+	addr        = flag.String("a", ":9000", "TCP listen address")
+	urlPath     = flag.String("p", "/", "URL path")
+	boundary    = flag.String("b", "ffmpeg", "Multipart boundary")
+	command     string
+	args        []string
+	reg         registry.Registry
 )
 
 func setHeaders(header http.Header) {
@@ -76,6 +77,6 @@ func main() {
 		fmt.Println(Version)
 		os.Exit(0)
 	}
-	reg = registry.New(command, args)
+	reg = registry.New(command, args, *directStart)
 	log.Fatalln(http.ListenAndServe(*addr, http.HandlerFunc(requestHandler)))
 }

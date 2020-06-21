@@ -28,6 +28,7 @@ type logEntry struct {
 type registry struct {
 	command       string
 	args          []string
+	directStart   bool
 	clients       multi.MapWriter
 	counter       uint64
 	stopRecording context.CancelFunc
@@ -54,6 +55,14 @@ func log(id string, registered bool, numClients int) {
 	fmt.Println(string(b))
 }
 
+func (t *registry) startRecording() {
+	t.stopRecording, t.waitForStop = startRecording(
+		t.command,
+		t.args,
+		t.clients,
+	)
+}
+
 // GenerateID returns an auto-incrementing ID.
 func (t *registry) GenerateID() string {
 	return strconv.FormatUint(atomic.AddUint64(&t.counter, 1), 10)
@@ -63,13 +72,9 @@ func (t *registry) GenerateID() string {
 // It returns the new number of clients in the Registry.
 func (t *registry) Add(id string, w io.Writer) (num int) {
 	num = t.clients.Add(w)
-	if num == 1 {
+	if num == 1 && !t.directStart {
 		// First client added, start the recording.
-		t.stopRecording, t.waitForStop = startRecording(
-			t.command,
-			t.args,
-			t.clients,
-		)
+		t.startRecording()
 	}
 	log(id, true, num)
 	return
@@ -79,7 +84,7 @@ func (t *registry) Add(id string, w io.Writer) (num int) {
 // It returns the new number of clients in the Registry.
 func (t *registry) Remove(id string, w io.Writer) (num int) {
 	num = t.clients.Remove(w)
-	if num == 0 {
+	if num == 0 && !t.directStart {
 		// Last client removed, stop the recording.
 		t.stopRecording()
 	}
@@ -88,13 +93,18 @@ func (t *registry) Remove(id string, w io.Writer) (num int) {
 }
 
 // New creates a new Registry.
-func New(command string, args []string) Registry {
-	return &registry{
+func New(command string, args []string, directStart bool) Registry {
+	reg := &registry{
 		command,
 		args,
+		directStart,
 		multi.NewMapWriter(),
 		0,
 		nil,
 		nil,
 	}
+	if directStart {
+		reg.startRecording()
+	}
+	return reg
 }
