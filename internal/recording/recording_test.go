@@ -166,7 +166,7 @@ func TestStartWithRestart(t *testing.T) {
 
 func TestStartWithInvalidCommand(t *testing.T) {
 	command := "./invalid"
-	args := []string{""}
+	args := []string{}
 	var buffer bytes.Buffer
 	_, wait := Start(command, args, &buffer)
 	err := wait()
